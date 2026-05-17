@@ -90,7 +90,9 @@ Implementations MAY include additional frontmatter fields not listed here. Reade
 
 ## 2. Body structure (recommended)
 
-The Markdown body is GBrain's input for chunking, embedding, search, and dream-cycle enrichment. The structure below is recommended but not enforced:
+The Markdown body is GBrain's input for chunking, embedding, search, and dream-cycle enrichment. **A thin body (just a title + one-line summary) makes the corpus useless for Ask AI** — semantic search has nothing meaningful to match against, so abstract questions return "No results" 100% of the time. Include real captured content.
+
+The structure below is recommended but not enforced:
 
 ```markdown
 # {{title}}
@@ -98,9 +100,21 @@ The Markdown body is GBrain's input for chunking, embedding, search, and dream-c
 ## Summary
 <one-paragraph synthesis; empty on first publish; populated by host LLM or GBrain dream cycle>
 
-## Commands
-- {{ISO timestamp}} `[{{block_id}}]` `{{command}}` (exit {{code}}, {{duration_ms}}ms)
-- ...
+## Prompts                              ← agent_session only; the most-load-bearing section
+> {{user prompt 1 — truncated to ~1000 chars}}
+
+> {{user prompt 2}}
+
+...
+
+## Agent messages                       ← agent_session only; last 5-8 reply snippets
+{{snippet}}
+
+## Commands                             ← activity_cluster (or session with shell calls)
+```bash
+{{command 1}}
+{{command 2}}
+```
 
 ## Files
 - {{relative path}} (+{{added}}/-{{removed}})
@@ -115,6 +129,8 @@ The Markdown body is GBrain's input for chunking, embedding, search, and dream-c
 ## Transcript
 <for source: agent_session — condensed turn-by-turn dialogue with [actor] tags>
 ```
+
+The **Prompts** + **Commands** sections are the highest-leverage content for Ask AI usefulness. Each prompt should be a real human-written question (or paraphrase) — that's the surface gbrain's hybrid search keys off of when answering "what was I working on?" / "did I try X?" questions. Without those, the corpus reads like a table of contents with no chapters.
 
 ### 2.1 Section ordering
 

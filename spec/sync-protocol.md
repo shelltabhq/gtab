@@ -37,8 +37,31 @@ gbrain put <slug> < page.md
 
 `put_page` is **idempotent and overwriting**:
 - A page at the given slug is fully replaced.
-- GBrain handles chunking, embedding, and indexing on every call.
+- GBrain stores + chunks the page. Embedding is a SEPARATE step (see §2.2).
 - For remote MCP callers (`gbrain serve --http`), auto-link and timeline extraction post-hooks are skipped. The dream cycle picks them up later. Local CLI callers get auto-link inline.
+
+### 2.2 Embedding — IMPORTANT
+
+`gbrain put` does NOT embed the page. Without embeddings, only keyword/FTS search works; semantic search (`gbrain query` with `--expand`) returns "No results" for any abstract question. A sync daemon MUST also run `gbrain embed --all` periodically to keep the corpus searchable.
+
+Embedding requires an OpenAI API key in the spawn env (`OPENAI_API_KEY`) — gbrain defaults to `openai:text-embedding-3-large` and there is no Anthropic embedding API today. Embedding cost is ~$0.02 per million tokens; a typical 1000-page corpus costs cents.
+
+Recommended pattern:
+1. After each sync tick that wrote ≥1 page, kick off `gbrain embed --all` in the background (mutex-serialized with put — PGLite is single-writer).
+2. Cache the OpenAI key in process memory between sync ticks so the user only enters it once per drive.
+3. Surface embed coverage via `gbrain stats` parsing (`Pages: N` + `Embedded: N`) so the UI can lock Ask AI until coverage ≥ ~80%.
+
+The reference daemon ([`sync/`](../sync/)) implements this as `runEmbedInBackground()` after the tick's put loop.
+
+### 2.3 Page body content — IMPORTANT
+
+The page body is what gbrain chunks and embeds. A 3-line summary ("session with N commands. Status: completed.") gives gbrain almost nothing to match against — Ask AI will return "No results" for everything because the corpus contains no semantically searchable text.
+
+A useful page body includes the actual captured content:
+- For agent sessions: the last 5-10 user prompts (truncated to ~1000 chars each) + the most recent agent message snippets
+- For terminal activity clusters: the last 10-30 bash commands as a fenced ` ```bash ` block
+
+The host translates raw capture into these body sections; the sync daemon merely renders them into Markdown. See [`session-page-schema.md`](./session-page-schema.md) §5 for the body content guidance.
 
 ### 2.1 Transports
 

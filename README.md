@@ -86,6 +86,25 @@ Any system that captures terminal sessions can publish to GBrain via the GTab sp
 
 Want the HTTP MCP endpoint exposed alongside `docker compose up` (port 3131)? Set `ENABLE_GBRAIN_SERVE=1`. Note: this serializes CLI access on PGLite's lock, so the standalone demo keeps it off by default.
 
+### Enabling Ask AI
+
+`gbrain put` stores pages but does NOT embed them. Without embeddings, semantic search returns "No results" for anything but exact keyword hits, so Ask AI feels broken. You need:
+
+1. **An OpenAI API key** (used only for embeddings + query expansion — gbrain defaults to `openai:text-embedding-3-large`, ~$0.02 per million tokens). Anthropic doesn't ship an embeddings API.
+2. **`gbrain embed --all`** run after pages land. The reference daemon does this automatically after each sync tick that wrote ≥1 page once the key is cached. Manually:
+   ```bash
+   OPENAI_API_KEY=sk-... gbrain embed --all
+   ```
+3. **Rich body content** in your pages. A 3-line summary gives gbrain nothing to embed against. Hosts should include the actual captured prompts + bash commands in the body — see [spec/session-page-schema.md §2](./spec/session-page-schema.md#2-body-structure-recommended).
+
+Check coverage with `gbrain stats`:
+```
+Pages:     44
+Embedded:  44   ← if this is 0, Ask AI won't work
+```
+
+For ShellTab, all three are wired: org-level OpenAI key encrypted in D1, forwarded to the drive per request as a header (never persisted on the drive), auto-embed after each sync cycle, rich-body pages built from R2-stored prompts and commands.
+
 ---
 
 ## Compatibility
