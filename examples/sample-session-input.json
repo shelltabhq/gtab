@@ -1,0 +1,70 @@
+{
+  "_comment": "Reference input that a host's sync daemon receives. This is what ShellTab's gtab-sync would consume from session_index + JSONL transcript before translating to Markdown. Hosts adapt this shape to their own capture format.",
+  "source": "agent_session",
+  "session": {
+    "provider_session_id": "01hxsess_auth_refactor_aa",
+    "drive_id": "drv_01HX_SAMPLE_DRIVE_X",
+    "org_id": "org_01HX_SAMPLE_ORG_X",
+    "actor_id": "usr_01HX_SARAH_PERSON_AAA",
+    "agent_type": "claude",
+    "started_at": "2026-05-16T14:18:42Z",
+    "last_active_at": "2026-05-16T14:33:09Z",
+    "ended_at": "2026-05-16T14:33:09Z",
+    "status": "completed",
+    "exit_status": "success",
+    "title": "Patch JWT validation in payment-service auth middleware",
+    "tags": ["auth", "security", "jwt", "middleware"]
+  },
+  "transcript_jsonl": [
+    {
+      "ts": "2026-05-16T14:18:42Z",
+      "role": "user",
+      "actor_id": "usr_01HX_SARAH_PERSON_AAA",
+      "content": "need to tighten auth middleware. tokens are valid for 24h which the security review flagged. also we have no rotation on refresh tokens — once a refresh token is stolen it's stolen forever."
+    },
+    {
+      "ts": "2026-05-16T14:18:50Z",
+      "role": "assistant",
+      "content": "I'll start by reading the current middleware and tests to understand the shape, then we can change expiry and add rotation. Tests will tell us if anything else depends on the 24h window."
+    },
+    {
+      "ts": "2026-05-16T14:18:58Z",
+      "role": "tool_call",
+      "tool": "Read",
+      "input": { "path": "packages/api/src/middleware/auth.ts" }
+    }
+  ],
+  "blocks": [
+    {
+      "block_id": "01HXBLK_AUTH_01",
+      "actor_id": "usr_01HX_SARAH_PERSON_AAA",
+      "command": "git checkout -b fix/jwt-expiry",
+      "exit_code": 0,
+      "started_at": "2026-05-16T14:18:42Z",
+      "duration_ms": 41
+    },
+    {
+      "block_id": "01HXBLK_AUTH_03",
+      "actor_id": "usr_01HX_SARAH_PERSON_AAA",
+      "command": "npm test -- auth.spec.ts",
+      "exit_code": 1,
+      "started_at": "2026-05-16T14:19:30Z",
+      "duration_ms": 4218,
+      "stderr_snippet": "FAIL src/middleware/auth.spec.ts > expires in 1h\n  AssertionError: expected 3600 to equal 86400"
+    },
+    {
+      "block_id": "01HXBLK_AUTH_12",
+      "actor_id": "usr_01HX_SARAH_PERSON_AAA",
+      "command": "git commit -m \"fix(auth): short-lived JWT with refresh rotation\"",
+      "exit_code": 0,
+      "started_at": "2026-05-16T14:32:14Z",
+      "duration_ms": 184
+    }
+  ],
+  "files_changed": [
+    { "path": "packages/api/src/middleware/auth.ts", "added": 45, "removed": 12 },
+    { "path": "packages/api/src/middleware/auth.spec.ts", "added": 38, "removed": 4 },
+    { "path": "packages/api/src/services/token.ts", "added": 72, "removed": 8 },
+    { "path": "packages/api/src/services/token.spec.ts", "added": 54, "removed": 0 }
+  ]
+}

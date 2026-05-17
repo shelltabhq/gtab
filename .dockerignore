@@ -1,0 +1,9 @@
+# Avoid copying host-side build artifacts into the Docker context.
+**/node_modules
+**/dist
+**/.gtab-sync
+**/.gtab
+**/*.log
+**/.DS_Store
+.git
+.github

@@ -1,0 +1,50 @@
+# GTab demo — single service, everything inside one container.
+#
+# Usage:
+#   docker compose up
+#   open http://localhost:8080
+#
+# To enable the sync daemon (continuously watches a JSON input dir):
+#   ENABLE_SYNC=1 docker compose up
+#
+# To disable GBrain (run brain-view alone with filesystem-only reads):
+#   ENABLE_GBRAIN=0 docker compose up
+
+services:
+  gtab:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: gtab-gbrain
+    ports:
+      - "8080:8080"   # Brain View (SPA + API)
+      - "3131:3131"   # gbrain serve --http (loopback by default in gbrain, but exposed for inspection)
+      - "7777:7777"   # gtab-sync /health (only when ENABLE_SYNC=1)
+    environment:
+      ENABLE_GBRAIN: "${ENABLE_GBRAIN:-1}"
+      ENABLE_SYNC: "${ENABLE_SYNC:-0}"
+      CORPUS_DIR: /opt/gtab/examples/sample-corpus
+      STATIC_DIR: /opt/gtab/brain-view/dist
+      GBRAIN_BIN: gbrain
+      GBRAIN_HOME: /var/lib/gbrain
+      PORT: "8080"
+      # Optional: provide an OpenAI / Anthropic key to unlock semantic search +
+      # full Ask AI. Without it, gbrain runs in keyword-only mode and Ask AI
+      # falls back to corpus-grep.
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+    volumes:
+      # Persist gbrain's PGLite + corpus across container restarts.
+      - gtab-brain:/var/lib/gbrain
+      # Sync daemon state (only used when ENABLE_SYNC=1).
+      - gtab-sync-state:/var/lib/gtab
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/api/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  gtab-brain:
+  gtab-sync-state:

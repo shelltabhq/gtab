@@ -1,0 +1,27 @@
+{
+  "name": "@gtab/sync",
+  "version": "0.1.0",
+  "description": "Reference sync daemon for GTab — bridges terminal capture → GBrain Markdown corpus.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "gtab-sync": "./src/index.ts",
+    "gtab-validate": "./src/validate.ts"
+  },
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "validate": "bun run src/validate.ts",
+    "test": "bun test",
+    "typecheck": "bunx tsc --noEmit"
+  },
+  "dependencies": {
+    "yaml": "^2.5.0"
+  },
+  "devDependencies": {
+    "bun-types": "^1.0.0",
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  }
+}
