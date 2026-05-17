@@ -1,16 +1,26 @@
 # GTab
 
-> Turn every terminal session and command into queryable, attributed, compounding knowledge — hosted on your machine, owned by you.
+> **A shared team brain — fed by every Claude Code and Codex session your team runs.**
 
-Every command you run, every session your agent completes, every commit, every deploy — your terminal already knows. But the moment the session ends, that knowledge evaporates. Tomorrow you re-explain. Next week you re-investigate. Next month you re-decide. Capture without compounding is just an archive.
+Your team works alongside Claude Code and Codex every day. Each session ends, the work disappears, the next session starts cold. Multiply that across an org and you're paying for the same investigation, the same context, the same explanation — over and over.
 
-GTab fixes the leak. It's a **protocol** plus a **reference implementation** for streaming terminal capture into [GBrain](https://github.com/garrytan/gbrain) — Garry Tan's open-source compounding memory system: a Markdown knowledge graph that auto-chunks, auto-embeds, auto-links, and runs a nightly dream cycle to enrich itself. 53+ skills, MCP-native, local-first, owned by the user. A **stable page schema** + **slug convention** translates captured terminal work into GBrain's Markdown format. A small **sync daemon** observes capture, debounces ~30s during active sessions, and publishes pages via `gbrain put`. The **Brain View** tile shows it back: chronological feed, attribution, Ask AI, graph. Hit GTab at any moment — mid-session or weeks later — and your work is there.
+GTab fixes that. Every prompt, every command, every file touched flows into a shared [GBrain](https://github.com/garrytan/gbrain) — Garry Tan's open-source compounding memory system. The brain is yours. It auto-chunks, auto-embeds, auto-links, and runs a nightly dream cycle to enrich itself. Your team queries it.
 
-[ShellTab](https://shelltab.dev) is the first full implementation, and this repo is what we extracted out so any terminal product can adopt the same pattern. ShellTab is a multiplayer cloud terminal where engineers and AI agents collaborate inside shared **drives** — persistent VM workspaces where every keystroke runs through a single observable surface. Multiple humans drive the same terminal; Claude Code and Codex CLI spawn as first-class participants; files, previews, and review pipelines live on the drive's NVMe. ShellTab already had the highest-fidelity capture record of any terminal product — full JSONL agent transcripts, every shell command with exit code and OSC 633 attribution, every git commit and deploy clustered by user and time span. What it didn't have was compounding. GTab is the bridge: every captured session and cluster flows into a per-drive GBrain corpus continuously, GBrain compounds, the GTab tile in the workspace surfaces the result. Solo by default. Multiplayer when the host (e.g., ShellTab) provides drive members. The brain stays on the user's machine.
+## What your team gets
 
-Built for the [GStack × GBrain Hackathon](https://events.ycombinator.com/GStack) (Y Combinator, May 16, 2026).
+- **Onboarding in an afternoon** — new hire Asks the brain, learns everything the team and its agents have ever done
+- **Agents that learn from each other** — your Claude reads what a teammate's Codex did yesterday before it starts
+- **No more "who did what?"** — every action attributed to a human or an agent, searchable forever
+- **Incident archaeology** — *"what changed auth between Monday and Wednesday?"* → real answer, cited from real sessions
+- **The work *is* the documentation** — no Notion sprawl, no stale wikis, no re-typing what just happened
+
+![Brain View inside ShellTab showing real team activity flowing into a live GBrain corpus](./gtabimg.png)
+
+*Real activity inside [ShellTab](https://shelltab.dev) — every agent session and terminal action, attributed, queryable, feeding a live GBrain corpus you can Ask anything.*
 
 > Garry Tan, May 9 2026: *"the future belongs to individuals who build compounding AI systems, not to individuals who use corporate-owned centralized AI tools."*
+>
+> **GBrain just landed. GTab is the protocol layer that lets every terminal product plug into it.**
 
 ---
 
@@ -22,20 +32,26 @@ cd gtab/docker
 docker compose up
 ```
 
-Open <http://localhost:8080>. You'll see the **Brain View** tile rendering against a pre-baked sample corpus. The demo reads pages from the corpus filesystem and shells out to the local `gbrain` CLI for Ask AI. No accounts, no signups, no API keys.
+Open <http://localhost:8080>. The **Brain View** tile renders against a pre-baked sample corpus — six anonymized pages across multiple actors and agents. No accounts, no signups, no API keys.
 
-Want the HTTP MCP endpoint exposed too (port 3131)? Set `ENABLE_GBRAIN_SERVE=1` — note that this serializes CLI access on PGLite's lock, so for the standalone demo we keep it off by default.
-
-Want to put a real page in?
+Put a real page in:
 
 ```bash
 docker exec -i gtab-gbrain gbrain put shell/session/2026-05-16/my-first-session \
   < ./examples/sample-corpus/shell/session/2026-05-16/01hxsess_auth_refactor_aa.md
 ```
 
-(GBrain's CLI verb is `put`; markdown content comes from stdin. The underlying MCP tool is `put_page`.)
+It appears in the Brain View within seconds.
 
-It will appear in the Brain View within seconds.
+---
+
+## Built on top of ShellTab
+
+[ShellTab](https://shelltab.dev) is a multiplayer cloud terminal where engineers and AI agents collaborate in the same place. Multiple humans, multiple agents (Claude Code, Codex CLI), all working together — every keystroke runs through one observable surface.
+
+ShellTab is the first full implementation of GTab and runs against this exact spec in production today. We extracted the protocol so **any terminal product** can adopt the same pattern. Fork the spec, become GBrain-native.
+
+Built for the [GStack × GBrain Hackathon](https://events.ycombinator.com/GStack) (Y Combinator, May 16, 2026).
 
 ---
 
@@ -66,6 +82,12 @@ Any system that captures terminal sessions can publish to GBrain via the GTab sp
 
 ---
 
+## Configuration
+
+Want the HTTP MCP endpoint exposed alongside `docker compose up` (port 3131)? Set `ENABLE_GBRAIN_SERVE=1`. Note: this serializes CLI access on PGLite's lock, so the standalone demo keeps it off by default.
+
+---
+
 ## Compatibility
 
 - **GBrain**: v0.31.1+ (thin-client mode + HTTP transport required).
@@ -78,7 +100,7 @@ Any system that captures terminal sessions can publish to GBrain via the GTab sp
 
 - **v0.1.0** — hackathon release, May 16 2026. Schema v1. Reference sync daemon + portable Brain View.
 - Phase 2 (post-hackathon, ~2 weeks): activity-cluster ingestion, streaming Ask AI, backlinks, dream-cycle button.
-- Phase 3: cross-host aggregation, team brains, schema migrations.
+- Phase 3: cross-org aggregation, federated brains, schema migrations.
 
 See [CHANGELOG.md](./CHANGELOG.md) for releases.
 
@@ -92,4 +114,4 @@ MIT. See [LICENSE](./LICENSE).
 
 ## Maintainer
 
-Maintained by [ShellTab HQ](https://shelltab.dev). ShellTab is the first full implementation of GTab and runs against this exact spec in production. The repository is intentionally host-agnostic — fork it, adopt the spec, and become GBrain-compatible. PRs welcome.
+Maintained by [ShellTab HQ](https://shelltab.dev). PRs welcome.
